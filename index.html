@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitAI - Smart Habit Tracking</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 1rem;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .habit-card:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+    <div id="app">
+        <!-- Header -->
+        <header class="glass p-4 mb-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">HabitAI</h1>
+            <div class="flex items-center gap-4">
+                <span class="glass px-4 py-2">
+                    <i class="bi bi-star-fill text-yellow-500"></i>
+                    {{ points }} points
+                </span>
+                <button @click="toggleProfile" class="glass p-2">
+                    <i class="bi bi-person-circle text-xl"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Daily Progress -->
+            <div class="glass p-6 col-span-1 md:col-span-2 lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4">Today's Progress</h2>
+                <div class="flex justify-center">
+                    <svg class="progress-ring" width="120" height="120">
+                        <circle class="progress-ring-circle" stroke="#e2e8f0" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                        <circle class="progress-ring-circle" :stroke-dasharray="progressCircle" stroke="#4f46e5" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                    </svg>
+                    <div class="absolute mt-12 text-2xl font-bold">{{ progress }}%</div>
+                </div>
+            </div>
+
+            <!-- Habits List -->
+            <div class="glass p-6 col-span-1 md:col-span-2">
+                <h2 class="text-xl font-semibold mb-4">Today's Habits</h2>
+                <div class="grid gap-4">
+                    <div v-for="habit in habits" :key="habit.id" 
+                         class="habit-card glass p-4 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium">{{ habit.name }}</h3>
+                            <p class="text-sm text-gray-600">{{ habit.time }}</p>
+                        </div>
+                        <button @click="completeHabit(habit.id)" 
+                                :class="habit.completed ? 'bg-green-500' : 'bg-gray-200'"
+                                class="rounded-full p-2 transition-colors">
+                            <i class="bi bi-check text-white"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Recommendations -->
+            <div class="glass p-6">
+                <h2 class="text-xl font-semibold mb-4">AI Suggestions</h2>
+                <div class="space-y-4">
+                    <div v-for="suggestion in aiSuggestions" :key="suggestion.id" 
+                         class="glass p-4">
+                        <p class="font-medium">{{ suggestion.text }}</p>
+                        <button @click="addHabit(suggestion)" 
+                                class="mt-2 text-indigo-600 text-sm">
+                            Add to habits <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    points: 1250,
+                    progress: 65,
+                    habits: [
+                        { id: 1, name: 'Morning Meditation', time: '7:00 AM', completed: true },
+                        { id: 2, name: 'Drink Water', time: '9:00 AM', completed: false },
+                        { id: 3, name: 'Exercise', time: '5:00 PM', completed: false }
+                    ],
+                    aiSuggestions: [
+                        { id: 1, text: 'Based on your sleep pattern, try going to bed at 10 PM' },
+                        { id: 2, text: 'Your focus could improve with an afternoon walk' }
+                    ]
+                }
+            },
+            computed: {
+                progressCircle() {
+                    const circumference = 2 * Math.PI * 52;
+                    return `${circumference} ${(circumference * (100 - this.progress)) / 100}`;
+                }
+            },
+            methods: {
+                toggleProfile() {
+                    // Profile toggle functionality
+                    alert('Profile feature coming soon!');
+                },
+                completeHabit(id) {
+                    const habit = this.habits.find(h => h.id === id);
+                    habit.completed = !habit.completed;
+                    if (habit.completed) {
+                        this.points += 100;
+                        this.updateProgress();
+                    } else {
+                        this.points -= 100;
+                        this.updateProgress();
+                    }
+                },
+                addHabit(suggestion) {
+                    const newHabit = {
+                        id: this.habits.length + 1,
+                        name: suggestion.text,
+                        time: 'Custom',
+                        completed: false
+                    };
+                    this.habits.push(newHabit);
+                    this.aiSuggestions = this.aiSuggestions.filter(s => s.id !== suggestion.id);
+                },
+                updateProgress() {
+                    const completed = this.habits.filter(h => h.completed).length;
+                    this.progress = Math.round((completed / this.habits.length) * 100);
+                }
+            }
+        }).mount('#app')
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
